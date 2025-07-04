@@ -10,7 +10,7 @@ interface Feedback {
   strengths: string[];
   areasForImprovement: string[];
   finalAssessment: string;
-  craetedAt: string;
+  createdAt: string;
 }
 
 interface Interview {
@@ -19,7 +19,7 @@ interface Interview {
   level: string;
   questions: string[];
   techstack: string[];
-  craetedAt: string;
+  createdAt: string;
   userId: string;
   type: string;
   finalized: boolean;
@@ -39,12 +39,12 @@ interface User {
 }
 
 interface InterviewCardProps {
-  id?: string;
+  interviewId?: string;
   userId?: string;
   role: string;
   type: string;
   techstack: string[];
-  craetedAt?: string;
+  createdAt?: string;
 }
 
 interface AgentProps {
