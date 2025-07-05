@@ -5,15 +5,19 @@ import React, { useState } from "react";
 import { z } from "zod";
 import FormField from "@/components/FormField";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import { auth } from "@/firebase/client";
+import { signIn, signUp } from "@/lib/actions/auth.action";
 
 const authFormSchema = (type: FormType) => {
   return z.object({
@@ -40,13 +44,55 @@ const AuthForm = ({ type }: { type: FormType }) => {
   });
 
   // 2. Define a submit handler.
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       if (type === "sign-up") {
+        const { name, email, password } = values;
+
+        // creates the user acc with email & password
+        const userCredentials = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+
+        const res = await signUp({
+          uid: userCredentials.user.uid, // unique id of the firebasea auth user
+          name: name!,
+          email,
+          password,
+        });
+
+        if (!res?.success) {
+          toast.error(res?.message);
+          return;
+        }
+
         toast.success("Account Created Successfully! Please Sign in");
         router.push("/sign-in");
         console.log("SIGN UP", values);
       } else {
+        const { email, password } = values;
+
+        // sign in on the client side 
+        const userCredential = await signInWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+
+        const idToken = await userCredential.user.getIdToken();
+
+        if(!idToken) {
+          toast.error('Sign in Failed')
+          return; 
+        }
+
+        // set token on the server side 
+        await signIn({  
+          email, idToken
+        }) 
+
         toast.success("Signed In Successfully!");
         router.push("/");
         console.log("SIGN IN", values);
@@ -99,14 +145,9 @@ const AuthForm = ({ type }: { type: FormType }) => {
               placeholder="Enter your password"
               type={showPassword ? "text" : "password"}
             >
-              <div
-              
-              onClick={() => setShowPassword((prev) => !prev)}
-              >
-
+              <div onClick={() => setShowPassword((prev) => !prev)} className="text-black">
                 {showPassword ? (
-                  <EyeOff
-                    className="h-4 w-4" />
+                  <EyeOff className="h-4 w-4" />
                 ) : (
                   <Eye className="h-4 w-4" />
                 )}
